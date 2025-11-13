@@ -2,15 +2,16 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAdmin } from '@/lib/auth-helpers'
 import * as XLSX from 'xlsx'
-import { getTemplateColumns, getRequiredFields } from '@/lib/protocol-templates'
+import { getRequiredFields } from '@/lib/protocol-templates'
+import { Modality } from '@prisma/client'
 
 export async function POST(request: Request) {
   try {
     const session = await requireAdmin()
 
     const formData = await request.formData()
-    const file = formData.get('file') as File
-    const modality = formData.get('modality') as string
+    const file = formData.get('file') as File | null
+    const modalityValue = formData.get('modality') as string | null
 
     if (!file) {
       return NextResponse.json(
@@ -19,12 +20,17 @@ export async function POST(request: Request) {
       )
     }
 
-    if (!modality || !['XR', 'MR', 'CT', 'US', 'NM'].includes(modality)) {
+    const validModalities: Modality[] = ['XR', 'MR', 'CT', 'US', 'NM']
+
+    if (!modalityValue || !validModalities.includes(modalityValue as Modality)) {
       return NextResponse.json(
         { error: 'Geçerli bir modalite seçilmedi' },
         { status: 400 }
       )
     }
+
+    // Buradan sonra TypeScript açısından modality artık Modality enum’u
+    const modality = modalityValue as Modality
 
     const buffer = await file.arrayBuffer()
     const workbook = XLSX.read(buffer)
@@ -167,7 +173,7 @@ export async function POST(request: Request) {
 
         await prisma.protocol.create({
           data: {
-            modality,
+            modality, // Artık Modality enum
             title,
             bodyMarkdown,
             tags: row['Kategori'] || row['Bölge'] || '',
