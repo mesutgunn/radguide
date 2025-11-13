@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       data: {
         status: 'done',
         result: result || 'FAILED',
-        score: score || null,
+        score: score ?? null,
         feedback: feedback || 'Sonuç alınamadı',
         outputJson: body
       }
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     await prisma.logEntry.create({
       data: {
         userId: analysisJob.userId,
-        actorRole: 'SYSTEM',
+        actorRole: null, // 'SYSTEM' yerine null: UserRole | null tipine uyumlu
         scope: 'analysis',
         action: 'callback_received',
         level: 'info',
