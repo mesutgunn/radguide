@@ -46,8 +46,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        // user.role doğrudan aktarılabilir
         token.role = user.role
-        token.id = user.id
+
+        // user.id TypeScript tarafında string | undefined, önce kontrol et
+        if (user.id) {
+          token.id = user.id
+        }
       }
       return token
     },
